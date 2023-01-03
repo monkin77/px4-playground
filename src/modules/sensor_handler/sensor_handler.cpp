@@ -31,7 +31,7 @@
  *
  ****************************************************************************/
 
-#include "sensor_handler.h"
+#include "sensor_handler.hpp"
 
 #include <px4_platform_common/getopt.h>
 #include <px4_platform_common/log.h>
@@ -81,6 +81,9 @@ int SensorHandlerModule::task_spawn(int argc, char *argv[])
 		_task_id = -1;
 		return -errno;
 	}
+
+	// Log a note that we started the task.
+	PX4_INFO("Sensor Handler task started");
 
 	return 0;
 }

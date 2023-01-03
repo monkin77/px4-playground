@@ -32,9 +32,9 @@
 ############################################################################
 
 px4_add_module(
-	MODULE templates__template_module
-	MAIN template_module
+	MODULE modules__sensor_handler_module
+	MAIN sensor_handler_module
 	SRCS
-		template_module.cpp
+		sensor_handler.cpp
 	)
 
