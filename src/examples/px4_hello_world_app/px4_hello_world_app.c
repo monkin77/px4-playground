@@ -59,33 +59,72 @@ int px4_hello_world_app_main(int argc, char *argv[])
 
 	// Testing Sensor subscriptions
 	int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
+	
+	// Limit the update rate to 2 Hz (500 ms interval)
+	orb_set_interval(sensor_sub_fd, 500);
 
+	// Advertise attitude topic
+	struct vehicle_attitude_s att;
+	memset(&att, 0, sizeof(att));
+	orb_advert_t att_pub = orb_advertise(ORB_ID(vehicle_attitude), &att);
+
+	// One could wait for multiple topics with this technique, just using one here
 	px4_pollfd_struct_t fds[] = {
 		{ .fd = sensor_sub_fd, .events = POLLIN},
+		/* There could be more File Descriptors here, in the form:
+			{.fd: other_sub_fd, .events: POLLIN}
+		*/
 	};
 
+	int error_counter = 0;
+
+	int counter = 0;
 	while (true) {
 		/* wait for sensor update of 1 file descriptor for 1000ms (1s) */
 		int poll_ret = px4_poll(fds, 1, 1000);
-		// Temporary log to use the poll_ret variable
-		printf("poll_ret: %d\n", poll_ret);
 
-		if (fds[0].revents & POLLIN) {
-			/* obtained data for the first file descriptor */
-			struct sensor_combined_s raw;
+		// Counter to avoid infinite loop for now
+		counter++;
+		if (counter > 10) break;
 
-			/* copy sensors raw data into local buffer */
-			orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+		if (poll_ret == 0) {
+			// This means none of our providers is giving us data
+			PX4_ERR("Got no data within a second");
+		} else if (poll_ret < 0) {
+			// This is seriously bad - should be an emergency
+			if (error_counter < 10 || error_counter % 50 == 0) {
+				// Use a counter to prevent flooding (and slowing us down)
+				PX4_ERR("ERROR return value from poll(): %d", poll_ret);
+			}
 
-			// Log the sensor data
-			PX4_INFO("Accelerometer:\t%8.4f\t%8.4f\t%8.4f", 
-				(double) raw.accelerometer_m_s2[0],
-				(double) raw.accelerometer_m_s2[1],
-				(double) raw.accelerometer_m_s2[2]
- 			);
+			error_counter++;
+		} else {
+			if (fds[0].revents & POLLIN) {
+				/* obtained data for the first file descriptor */
+				struct sensor_combined_s raw;
 
-			// Stop the loop to display only once
-			break;
+				/* copy sensors raw data into local buffer */
+				orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+
+				// Log the sensor data
+				PX4_INFO("Accelerometer:\t%8.4f\t%8.4f\t%8.4f", 
+					(double) raw.accelerometer_m_s2[0],
+					(double) raw.accelerometer_m_s2[1],
+					(double) raw.accelerometer_m_s2[2]
+				);
+				
+				// Set att and publish this information for other apps
+				// The following lines does not have any meaning, it's just an example
+				att.q[0] = raw.accelerometer_m_s2[0];
+				att.q[1] = raw.accelerometer_m_s2[1];
+				att.q[2] = raw.accelerometer_m_s2[2];
+
+				orb_publish(ORB_ID(vehicle_attitude), att_pub, &att);	
+			}
+
+			/* There could be more File Descriptors here in the form:
+			if (fds[1..n].revents & POLLIN) {}
+			 */
 		}
 	}
 
