@@ -70,7 +70,8 @@ int SensorHandlerModule::custom_command(int argc, char *argv[])
 
 int SensorHandlerModule::task_spawn(int argc, char *argv[])
 {
-	_task_id = px4_task_spawn_cmd("module",
+	// This  function is called upon module start and will spawn the task that will execute the "run" method?
+	_task_id = px4_task_spawn_cmd("sensor_handler_task",
 				      SCHED_DEFAULT,
 				      SCHED_PRIORITY_DEFAULT,
 				      1024,
@@ -140,6 +141,8 @@ SensorHandlerModule::SensorHandlerModule(int example_param, bool example_flag)
 
 void SensorHandlerModule::run()
 {
+	// This is the function that is executed by the task?
+
 	// Example: run the loop synchronized to the sensor_combined topic publication
 	int sensor_combined_sub = orb_subscribe(ORB_ID(sensor_combined));
 
