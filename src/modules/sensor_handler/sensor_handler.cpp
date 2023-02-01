@@ -173,6 +173,7 @@ void SensorHandlerModule::run()
 			orb_copy(ORB_ID(sensor_combined), sensor_combined_sub, &sensor_combined);
 			// TODO: do something with the data...
 
+            PX4_INFO("Task received data at timestamp %lu", sensor_combined.timestamp);
 		}
 
 		parameters_update();

@@ -82,4 +82,7 @@ px4_add_romfs_files(
 
 	6011_typhoon_h480
 	6011_typhoon_h480.post
+
+	# [22000, 22999] Reserve for custom models
+	22000_quad_custom
 )
