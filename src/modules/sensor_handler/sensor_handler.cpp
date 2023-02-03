@@ -173,7 +173,13 @@ void SensorHandlerModule::run()
 			orb_copy(ORB_ID(sensor_combined), sensor_combined_sub, &sensor_combined);
 			// TODO: do something with the data...
 
-            PX4_INFO("Task received data at timestamp %lu", sensor_combined.timestamp);
+			// Auxiliary function defined in sensor_combined.h that prints the data provided by the topic
+			print_message(ORB_ID(sensor_combined), sensor_combined);
+
+			// Sleep 3s to view the logs
+			px4_usleep(3 * 1000000);
+
+            		// PX4_INFO("Task received data at timestamp %lu", sensor_combined.timestamp);
 		}
 
 		parameters_update();
