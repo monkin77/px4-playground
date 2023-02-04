@@ -38,6 +38,13 @@
 #include <uORB/SubscriptionInterval.hpp>
 #include <uORB/topics/parameter_update.h>
 
+#include <uORB/topics/sensor_combined.h>
+#include <uORB/topics/sensor_gps.h>
+#include <uORB/topics/sensor_baro.h>
+#include <uORB/topics/sensor_gyro.h>
+#include <uORB/topics/sensor_mag.h>
+#include <uORB/topics/cpuload.h>
+
 using namespace time_literals;
 
 extern "C" __EXPORT int sensor_handler_module_main(int argc, char *argv[]);

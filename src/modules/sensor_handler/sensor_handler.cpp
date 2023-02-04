@@ -38,14 +38,6 @@
 #include <px4_platform_common/posix.h>
 
 #include <uORB/topics/parameter_update.h>
-#include <uORB/topics/sensor_combined.h>
-#include <uORB/topics/sensor_gps.h>
-#include <uORB/topics/sensor_baro.h>
-#include <uORB/topics/sensor_gyro.h>
-#include <uORB/topics/sensor_mag.h>
-#include <uORB/topics/cpuload.h>
-
-
 
 int SensorHandlerModule::print_status()
 {
@@ -263,6 +255,8 @@ void SensorHandlerModule::handle_polling_results() {
 	}
 
 	if (this->poll_fds[0].revents & POLLIN) {
+		// TODO: Confirm that the data is being copied by reference
+		
 		struct sensor_combined_s sensor_combined = this->all_sensor_data.sensor_combined;
 		orb_copy(ORB_ID(sensor_combined), this->sensors_sub[0], &sensor_combined);
 		// TODO: do something with the data...
