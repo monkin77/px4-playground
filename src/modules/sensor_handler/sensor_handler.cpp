@@ -188,23 +188,7 @@ void SensorHandlerModule::run()
 
 		} else {
 			// pret > 0 => there is a file descriptor with new data. So we check all FDs
-			if (this->poll_fds[0].revents & POLLIN) {
-				struct sensor_combined_s sensor_combined;
-				orb_copy(ORB_ID(sensor_combined), sensor_combined_sub, &sensor_combined);
-				// TODO: do something with the data...
-
-				// Auxiliary function defined in sensor_combined.h that prints the data provided by the topic
-				print_message(ORB_ID(sensor_combined), sensor_combined);
-
-				// PX4_INFO("Task received data at timestamp %lu", sensor_combined.timestamp);
-			} 
-
-			if (this->poll_fds[1].revents & POLLIN) {
-				struct sensor_gps_s sensor_gps;
-				orb_copy(ORB_ID(sensor_gps), sensor_gps_sub, &sensor_gps);
-
-				print_message(ORB_ID(sensor_gps), sensor_gps);
-			}
+			this->handle_polling_results();
 		}
 
 		// TODO: Check what this does
@@ -264,4 +248,35 @@ $ module start -f -p 42
 int sensor_handler_module_main(int argc, char *argv[])
 {
 	return SensorHandlerModule::main(argc, argv);
+}
+
+// Custom Class methods
+
+/**
+ * @brief This function is called when a new message is received from the subscribed topic
+*/
+void SensorHandlerModule::handle_polling_results() {		
+	// Confirm that the class fields are initialized
+	if (this->sensors_sub[0] == -1) {
+		PX4_ERR("Invalid behavior. Sensor subscriptions not initialized.");
+		return;
+	}
+
+	if (this->poll_fds[0].revents & POLLIN) {
+		struct sensor_combined_s sensor_combined = this->all_sensor_data.sensor_combined;
+		orb_copy(ORB_ID(sensor_combined), this->sensors_sub[0], &sensor_combined);
+		// TODO: do something with the data...
+
+		// Auxiliary function defined in sensor_combined.h that prints the data provided by the topic
+		print_message(ORB_ID(sensor_combined), sensor_combined);
+
+		// PX4_INFO("Task received data at timestamp %lu", sensor_combined.timestamp);
+	} 
+
+	if (this->poll_fds[1].revents & POLLIN) {
+		struct sensor_gps_s sensor_gps = this->all_sensor_data.sensor_gps;
+		orb_copy(ORB_ID(sensor_gps), this->sensors_sub[1], &sensor_gps);
+
+		print_message(ORB_ID(sensor_gps), sensor_gps);
+	}
 }

@@ -87,8 +87,18 @@ private:
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
 	// Custom Class Variables & Methods
+
+	// Array with int IDs of the subscribed topics
 	int sensors_sub[6] = {-1};	// Initialize to -1 to indicate no subscription
+
+	// Array of pollfd structs that are used to poll the subscribed topics
 	px4_pollfd_struct_t poll_fds[6];
+
+	// Struct with the sensor data of all sensors
+	struct sensor_data_s {
+		struct sensor_combined_s sensor_combined; struct sensor_gps_s sensor_gps; struct sensor_baro_s sensor_baro;
+		struct sensor_gyro_s sensor_gyro; struct sensor_mag_s sensor_mag; struct cpuload_s cpuload;
+	} all_sensor_data;
 
 	void handle_polling_results();
 };
