@@ -86,5 +86,10 @@ private:
 	// Subscriptions
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
+	// Custom Class Variables & Methods
+	int sensors_sub[6] = {-1};	// Initialize to -1 to indicate no subscription
+	px4_pollfd_struct_t poll_fds[6];
+
+	void handle_polling_results();
 };
 

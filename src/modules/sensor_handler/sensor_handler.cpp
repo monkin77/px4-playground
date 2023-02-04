@@ -39,6 +39,12 @@
 
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/sensor_combined.h>
+#include <uORB/topics/sensor_gps.h>
+#include <uORB/topics/sensor_baro.h>
+#include <uORB/topics/sensor_gyro.h>
+#include <uORB/topics/sensor_mag.h>
+#include <uORB/topics/cpuload.h>
+
 
 
 int SensorHandlerModule::print_status()
@@ -71,6 +77,7 @@ int SensorHandlerModule::custom_command(int argc, char *argv[])
 int SensorHandlerModule::task_spawn(int argc, char *argv[])
 {
 	// This  function is called upon module start and will spawn the task that will execute the "run" method?
+	// TODO: Investigate this parameters
 	_task_id = px4_task_spawn_cmd("sensor_handler_task",
 				      SCHED_DEFAULT,
 				      SCHED_PRIORITY_DEFAULT,
@@ -145,18 +152,30 @@ void SensorHandlerModule::run()
 
 	// Example: run the loop synchronized to the sensor_combined topic publication
 	int sensor_combined_sub = orb_subscribe(ORB_ID(sensor_combined));
+	int sensor_gps_sub = orb_subscribe(ORB_ID(sensor_gps));
+	int sensor_baro_sub = orb_subscribe(ORB_ID(sensor_baro));
+	int sensor_gyro_sub = orb_subscribe(ORB_ID(sensor_gyro));
+	int sensor_mag_sub = orb_subscribe(ORB_ID(sensor_mag));
+	int cpuload_sub = orb_subscribe(ORB_ID(cpuload));
 
-	px4_pollfd_struct_t fds[1];
-	fds[0].fd = sensor_combined_sub;
-	fds[0].events = POLLIN;
+	// Update the sensors_sub property of the class with the subscription IDs
+	this->sensors_sub[0] = sensor_combined_sub; this->sensors_sub[1] = sensor_gps_sub; this->sensors_sub[2] = sensor_baro_sub;
+	this->sensors_sub[3] = sensor_gyro_sub; this->sensors_sub[4] = sensor_mag_sub; this->sensors_sub[5] = cpuload_sub;
+
+	// Set up each of the poll structures
+	for (int i = 0; i < 6; i++) {
+		this->poll_fds[i].fd = sensors_sub[i];
+		this->poll_fds[i].events = POLLIN;
+	}
 
 	// initialize parameters
 	parameters_update(true);
 
 	while (!should_exit()) {
 
-		// wait for up to 1000ms for data
-		int pret = px4_poll(fds, (sizeof(fds) / sizeof(fds[0])), 1000);
+		// wait for up to 1000ms for data. If there is new data, pret will be positive?
+		int pret = px4_poll(this->poll_fds, (sizeof(this->poll_fds) / sizeof(this->poll_fds[0])), 1000);
+		PX4_INFO("Polling with pret = %d", pret);
 
 		if (pret == 0) {
 			// Timeout: let the loop run anyway, don't do `continue` here
@@ -167,22 +186,32 @@ void SensorHandlerModule::run()
 			px4_usleep(50000);
 			continue;
 
-		} else if (fds[0].revents & POLLIN) {
+		} else {
+			// pret > 0 => there is a file descriptor with new data. So we check all FDs
+			if (this->poll_fds[0].revents & POLLIN) {
+				struct sensor_combined_s sensor_combined;
+				orb_copy(ORB_ID(sensor_combined), sensor_combined_sub, &sensor_combined);
+				// TODO: do something with the data...
 
-			struct sensor_combined_s sensor_combined;
-			orb_copy(ORB_ID(sensor_combined), sensor_combined_sub, &sensor_combined);
-			// TODO: do something with the data...
+				// Auxiliary function defined in sensor_combined.h that prints the data provided by the topic
+				print_message(ORB_ID(sensor_combined), sensor_combined);
 
-			// Auxiliary function defined in sensor_combined.h that prints the data provided by the topic
-			print_message(ORB_ID(sensor_combined), sensor_combined);
+				// PX4_INFO("Task received data at timestamp %lu", sensor_combined.timestamp);
+			} 
 
-			// Sleep 3s to view the logs
-			px4_usleep(3 * 1000000);
+			if (this->poll_fds[1].revents & POLLIN) {
+				struct sensor_gps_s sensor_gps;
+				orb_copy(ORB_ID(sensor_gps), sensor_gps_sub, &sensor_gps);
 
-            		// PX4_INFO("Task received data at timestamp %lu", sensor_combined.timestamp);
+				print_message(ORB_ID(sensor_gps), sensor_gps);
+			}
 		}
 
+		// TODO: Check what this does
 		parameters_update();
+
+		// Sleep 3s to make it more readable
+		px4_usleep(3 * 1000000);
 	}
 
 	orb_unsubscribe(sensor_combined_sub);
