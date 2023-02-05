@@ -257,20 +257,20 @@ void SensorHandlerModule::handle_polling_results() {
 	if (this->poll_fds[0].revents & POLLIN) {
 		// TODO: Confirm that the data is being copied by reference
 		
-		struct sensor_combined_s sensor_combined = this->all_sensor_data.sensor_combined;
-		orb_copy(ORB_ID(sensor_combined), this->sensors_sub[0], &sensor_combined);
+		// Get the pointer to the sensor_combined topic -> Sensor_Combined_sPointer
+		struct sensor_combined_s* sensor_combined_sp = &this->all_sensor_data.sensor_combined;
+		orb_copy(ORB_ID(sensor_combined), this->sensors_sub[0], sensor_combined_sp);
+
 		// TODO: do something with the data...
 
 		// Auxiliary function defined in sensor_combined.h that prints the data provided by the topic
-		print_message(ORB_ID(sensor_combined), sensor_combined);
-
-		// PX4_INFO("Task received data at timestamp %lu", sensor_combined.timestamp);
+		print_message(ORB_ID(sensor_combined), *sensor_combined_sp);
 	} 
 
 	if (this->poll_fds[1].revents & POLLIN) {
-		struct sensor_gps_s sensor_gps = this->all_sensor_data.sensor_gps;
-		orb_copy(ORB_ID(sensor_gps), this->sensors_sub[1], &sensor_gps);
+		struct sensor_gps_s* sensor_gps_sp = &this->all_sensor_data.sensor_gps;
+		orb_copy(ORB_ID(sensor_gps), this->sensors_sub[1], sensor_gps_sp);
 
-		print_message(ORB_ID(sensor_gps), sensor_gps);
+		print_message(ORB_ID(sensor_gps), *sensor_gps_sp);
 	}
 }
