@@ -146,16 +146,18 @@ void SensorHandlerModule::run()
 	int sensor_combined_sub = orb_subscribe(ORB_ID(sensor_combined));
 	int sensor_gps_sub = orb_subscribe(ORB_ID(sensor_gps));
 	int sensor_baro_sub = orb_subscribe(ORB_ID(sensor_baro));
+	int sensor_accel_sub = orb_subscribe(ORB_ID(sensor_accel));
 	int sensor_gyro_sub = orb_subscribe(ORB_ID(sensor_gyro));
 	int sensor_mag_sub = orb_subscribe(ORB_ID(sensor_mag));
 	int cpuload_sub = orb_subscribe(ORB_ID(cpuload));
 
 	// Update the sensors_sub property of the class with the subscription IDs
 	this->sensors_sub[0] = sensor_combined_sub; this->sensors_sub[1] = sensor_gps_sub; this->sensors_sub[2] = sensor_baro_sub;
-	this->sensors_sub[3] = sensor_gyro_sub; this->sensors_sub[4] = sensor_mag_sub; this->sensors_sub[5] = cpuload_sub;
+	this->sensors_sub[3] = sensor_accel_sub; this->sensors_sub[4] = sensor_gyro_sub; this->sensors_sub[5] = sensor_mag_sub; 
+	this->sensors_sub[6] = cpuload_sub;
 
 	// Set up each of the poll structures
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 7; i++) {
 		this->poll_fds[i].fd = sensors_sub[i];
 		this->poll_fds[i].events = POLLIN;
 	}
@@ -187,7 +189,7 @@ void SensorHandlerModule::run()
 		parameters_update();
 
 		// Sleep 3s to make it more readable
-		px4_usleep(3 * 1000000);
+		px4_usleep(5 * 1000000);
 	}
 
 	orb_unsubscribe(sensor_combined_sub);
@@ -261,8 +263,6 @@ void SensorHandlerModule::handle_polling_results() {
 		struct sensor_combined_s* sensor_combined_sp = &this->all_sensor_data.sensor_combined;
 		orb_copy(ORB_ID(sensor_combined), this->sensors_sub[0], sensor_combined_sp);
 
-		// TODO: do something with the data...
-
 		// Auxiliary function defined in sensor_combined.h that prints the data provided by the topic
 		print_message(ORB_ID(sensor_combined), *sensor_combined_sp);
 	} 
@@ -270,7 +270,36 @@ void SensorHandlerModule::handle_polling_results() {
 	if (this->poll_fds[1].revents & POLLIN) {
 		struct sensor_gps_s* sensor_gps_sp = &this->all_sensor_data.sensor_gps;
 		orb_copy(ORB_ID(sensor_gps), this->sensors_sub[1], sensor_gps_sp);
-
 		print_message(ORB_ID(sensor_gps), *sensor_gps_sp);
+	}
+
+	if (this->poll_fds[2].revents & POLLIN) {
+		struct sensor_baro_s* sensor_baro_sp = &this->all_sensor_data.sensor_baro;
+		orb_copy(ORB_ID(sensor_baro), this->sensors_sub[2], sensor_baro_sp);
+		print_message(ORB_ID(sensor_baro), *sensor_baro_sp);
+	}
+
+	if (this->poll_fds[3].revents & POLLIN) {
+		struct sensor_accel_s* sensor_accel_sp = &this->all_sensor_data.sensor_accel;
+		orb_copy(ORB_ID(sensor_accel), this->sensors_sub[3], sensor_accel_sp);
+		print_message(ORB_ID(sensor_accel), *sensor_accel_sp);
+	}
+
+	if (this->poll_fds[4].revents & POLLIN) {
+		struct sensor_gyro_s* sensor_gyro_sp = &this->all_sensor_data.sensor_gyro;
+		orb_copy(ORB_ID(sensor_gyro), this->sensors_sub[4], sensor_gyro_sp);
+		print_message(ORB_ID(sensor_gyro), *sensor_gyro_sp);
+	}
+
+	if (this->poll_fds[5].revents & POLLIN) {
+		struct sensor_mag_s* sensor_mag_sp = &this->all_sensor_data.sensor_mag;
+		orb_copy(ORB_ID(sensor_mag), this->sensors_sub[5], sensor_mag_sp);
+		print_message(ORB_ID(sensor_mag), *sensor_mag_sp);
+	}
+
+	if (this->poll_fds[6].revents & POLLIN) {
+		struct cpuload_s* cpuload_sp = &this->all_sensor_data.cpuload;
+		orb_copy(ORB_ID(cpuload), this->sensors_sub[6], cpuload_sp);
+		print_message(ORB_ID(cpuload), *cpuload_sp);
 	}
 }
