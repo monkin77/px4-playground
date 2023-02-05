@@ -70,6 +70,7 @@ px4_add_romfs_files(
 	4900_crazyflie
 	4901_crazyflie21
 
+
 	# [5000, 5999] Quadrotor +"
 	5001_quad_+
 
@@ -113,6 +114,7 @@ px4_add_romfs_files(
 	18001_TF-B1
 
 	# [22000, 22999] Reserve for custom models
+    	22000_quad_custom
 
 	24001_dodeca_cox
 

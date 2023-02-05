@@ -1,0 +1,5 @@
+menuconfig MODULES_SENSOR_HANDLER
+	bool "sensor_handler_module"
+	default n
+	---help---
+		Enable support for sensor_handler
