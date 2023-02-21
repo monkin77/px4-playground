@@ -308,5 +308,5 @@ mavlink boot_complete
 replay trystart
 
 # Start Custom Modules
-sensor_handler_module start
+# sensor_handler_module start
 

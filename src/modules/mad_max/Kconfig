@@ -1,0 +1,5 @@
+menuconfig MODULES_MAD_MAX
+	bool "mad_max"
+	default y
+	---help---
+		Enable mad_max module, a module used for the workshop
